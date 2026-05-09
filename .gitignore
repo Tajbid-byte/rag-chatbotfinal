@@ -1,0 +1,16 @@
+# Secret files - NEVER commit these!
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.log
+
+# Node
+node_modules/
+dist/
+.DS_Store
