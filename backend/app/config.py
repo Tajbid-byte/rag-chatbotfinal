@@ -5,7 +5,8 @@ load_dotenv()
 
 class Settings:
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL: str = "llama-3.1-70b-versatile"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+
     MAX_FILE_SIZE: int = 10 * 1024 * 1024
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
