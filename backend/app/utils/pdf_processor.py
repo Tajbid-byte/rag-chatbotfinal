@@ -10,7 +10,8 @@ class PDFProcessor:
             chunk_size=settings.CHUNK_SIZE,
             chunk_overlap=settings.CHUNK_OVERLAP,
             length_function=len,
-            separators=["\n\n", "\n", ".", " ", ""]
+            # ✅ Better separators - splits at paragraph/sentence boundaries
+            separators=["\n\n", "\n", ". ", "! ", "? ", ", ", " ", ""]
         )
 
     def process_pdf(self, file_bytes: bytes, filename: str) -> List:
@@ -23,22 +24,33 @@ class PDFProcessor:
 
         try:
             reader = PdfReader(tmp_path)
-            text = ""
+            pages_text = []
             for i, page in enumerate(reader.pages, 1):
                 page_text = page.extract_text()
                 if page_text and page_text.strip():
-                    text += f"\n\n[Page {i}]\n{page_text}"
+                    # ✅ Tag each page so we know where content came from
+                    pages_text.append((i, page_text.strip()))
         finally:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
-        if not text.strip():
-            raise ValueError("No text found in PDF. It may contain only images.")
+        if not pages_text:
+            raise ValueError("No text found in PDF. It may be a scanned image PDF.")
 
+        # ✅ FIX: Process each page separately so page numbers are accurate
+        all_chunks = []
         splitter = self._get_splitter()
-        chunks = splitter.create_documents(
-            texts=[text],
-            metadatas=[{"filename": filename, "source": filename}]
-        )
-        print(f"Processed '{filename}': {len(chunks)} chunks")
-        return chunks
+
+        for page_num, text in pages_text:
+            chunks = splitter.create_documents(
+                texts=[text],
+                metadatas=[{
+                    "filename": filename,
+                    "source": filename,
+                    "page": page_num
+                }]
+            )
+            all_chunks.extend(chunks)
+
+        print(f"Processed '{filename}': {len(pages_text)} pages → {len(all_chunks)} chunks")
+        return all_chunks
